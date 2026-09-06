@@ -38,6 +38,10 @@ function isApplePurchasePlatform() {
 }
 
 async function nativeInit() {
+  if (typeof setForgeMembershipActive === 'function') {
+    setForgeMembershipActive(true);
+  }
+
   if (isDesktopPremiumBuild()) {
     unlockForge('desktop');
     unlockAutoMode(false, 'desktop');
