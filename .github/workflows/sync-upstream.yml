@@ -1,0 +1,76 @@
+name: Auto-Sync Upstream
+
+on:
+  schedule:
+    # Runs daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows manual trigger from Actions tab
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync-and-deploy:
+    name: Sync Upstream & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full commit history required for 3-way merge
+
+      - name: Configure Git Identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add & Fetch Upstream Remote
+        run: |
+          git remote add upstream https://github.com/Werkstattl/quick-dungeon-crawler-rpg-od.git || true
+          git fetch upstream main
+
+      - name: Attempt Merge from Upstream
+        id: merge_step
+        run: |
+          echo "Merging upstream/main into local main..."
+          git merge upstream/main --no-edit -m "chore: auto-sync updates from upstream [skip ci]"
+
+      - name: Set up Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Execute Regression Test Suite
+        run: |
+          echo "Running 194 unit/regression tests..."
+          node --test tests/*.test.js
+
+      - name: Push Synchronized Changes
+        if: success()
+        run: |
+          echo "Pushing verified changes to origin main..."
+          git push origin main
+
+      - name: Handle Sync / Test Failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: |
+            The automated sync workflow failed to merge upstream changes or failed test verification.
+
+            ### Run Details:
+            - **Trigger**: `${{ github.event_name }}`
+            - **Actor**: `${{ github.actor }}`
+            - **Workflow Run**: [View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Please fetch upstream locally, resolve conflicts, verify tests via `node --test tests/*.test.js`, and push manually.
+        run: |
+          # Abort any in-progress merge before reporting
+          git merge --abort 2>/dev/null || true
+
+          # Create an issue to alert maintainers
+          gh issue create \
+            --title "🚨 Upstream Auto-Sync Failed: Conflict or Test Regression" \
+            --body "$ISSUE_BODY"
