@@ -38,6 +38,7 @@ function isApplePurchasePlatform() {
 }
 
 async function nativeInit() {
+  // Enable membership by default
   if (typeof setForgeMembershipActive === 'function') {
     setForgeMembershipActive(true);
   }
