@@ -183,6 +183,7 @@ main {
     text-align: center;
 }
 
+
 .auto-levelup-priority-block {
     margin: 0.5rem 0;
 }
@@ -937,7 +938,7 @@ button:focus {
 }
 
 #defaultModal .content {
-    max-height: calc(100vh - 2rem);
+    max-height: calc(100vh - 3rem);
     overflow-y: auto;
 }
 
