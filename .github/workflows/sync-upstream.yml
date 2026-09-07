@@ -35,7 +35,8 @@ jobs:
         id: merge_step
         run: |
           echo "Merging upstream/main into local main..."
-          git merge upstream/main --no-edit -m "chore: auto-sync updates from upstream [skip ci]"
+          UPSTREAM_MSG=$(git log -1 --pretty=format:"%s" upstream/main | sed -E 's/\[(skip ci|ci skip)\]//gi' | xargs)
+          git merge upstream/main --no-edit -m "auto-sync: ${UPSTREAM_MSG}"
 
       - name: Set up Node.js Runtime
         uses: actions/setup-node@v4
