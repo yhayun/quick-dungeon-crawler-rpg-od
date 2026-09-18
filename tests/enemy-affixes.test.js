@@ -232,12 +232,12 @@ test('affix stats respect the enemy dodge and attack speed caps', () => {
     assert.ok(result.atkSpd <= 2.75, `atkSpd ${result.atkSpd} exceeded the cap`);
 });
 
-test('Enraged trades thirty percent more attack for twenty percent less health', () => {
+test('Enraged trades twenty percent more attack for twenty percent less health', () => {
     const context = createAffixContext();
     context.__stats = { hpMax: 1000, atk: 100, def: 50, atkSpd: 1.5, dodge: 10, vamp: 0 };
     const result = vm.runInContext(`applyAffixStats(__stats, ['enraged'])`, context);
 
-    assert.equal(result.atk, 130);
+    assert.equal(result.atk, 120);
     assert.equal(result.hpMax, 800);
 });
 
@@ -441,7 +441,7 @@ test('guardians enrage exactly once at half health', () => {
     vm.runInContext('checkBossPhase()', context);
 
     const enragedAtk = context.enemy.stats.atk;
-    assert.ok(enragedAtk > 100, 'guardian should gain attack');
+    assert.equal(enragedAtk, 120);
     assert.equal(context.enemy.phase.index, 1);
 
     // Further hits below the same threshold must not stack another enrage.
@@ -462,6 +462,7 @@ test('monarchs enrage at both thresholds but never more than twice', () => {
     context.enemy.stats.hp = 250;
     vm.runInContext('checkBossPhase()', context);
     assert.equal(context.enemy.phase.index, 2);
+    assert.equal(context.enemy.stats.atk, 144);
 
     const finalAtk = context.enemy.stats.atk;
     context.enemy.stats.hp = 10;

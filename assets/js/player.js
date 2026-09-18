@@ -362,6 +362,54 @@ const playerLoadStats = () => {
     }
 }
 
+// Choose a sale threshold, then confirm the matching inventory items.
+const openBulkSaleModal = (type) => {
+    const inventory = document.querySelector('#inventory');
+    const maximum = type === 'tier' ? MAX_EQUIPMENT_TIER : MAX_EQUIPMENT_LEVEL;
+    const step = type === 'level' ? 10 : 1;
+    const minimum = type === 'tier' ? 2 : 10;
+    const labelKey = type === 'tier' ? 'sell-by-tier' : 'sell-by-level';
+    sfxOpen.play();
+    inventory.style.filter = 'brightness(50%)';
+    defaultModalElement.style.display = 'flex';
+    defaultModalElement.innerHTML = `
+        <div class="content">
+            <label for="bulk-sell-threshold">${t(labelKey)}</label>
+            <select id="bulk-sell-threshold">
+                ${Array.from({ length: Math.floor((maximum - minimum) / step) + 1 }, (_, i) => `<option value="${minimum + i * step}">${minimum + i * step}</option>`).join('')}
+            </select>
+            <p id="bulk-sell-preview" aria-live="polite"></p>
+            <div class="button-container">
+                <button id="sell-confirm">${t('sell')}</button>
+                <button id="sell-cancel">${t('cancel')}</button>
+            </div>
+        </div>`;
+    const threshold = document.querySelector('#bulk-sell-threshold');
+    const confirm = document.querySelector('#sell-confirm');
+    const filter = () => ({ type, value: Number(threshold.value) });
+    const updatePreview = () => {
+        const summary = previewBulkSale(filter());
+        document.querySelector('#bulk-sell-preview').textContent = t('bulk-sell-preview', summary);
+    };
+    const close = () => {
+        defaultModalElement.style.display = 'none';
+        defaultModalElement.innerHTML = '';
+        inventory.style.filter = 'brightness(100%)';
+        sellRarityElement.value = 'none';
+        sellRarityElement.className = '';
+    };
+    threshold.onchange = updatePreview;
+    confirm.onclick = () => {
+        sellInventoryItems(filter());
+        close();
+    };
+    document.querySelector('#sell-cancel').onclick = () => {
+        sfxDecline.play();
+        close();
+    };
+    updatePreview();
+};
+
 // Opens inventory
 const openInventory = () => {
     sfxOpen.play();
@@ -385,6 +433,10 @@ const openInventory = () => {
     sellRarityElement.className = '';
     sellRarityElement.onchange = function () {
         let rarity = sellRarityElement.value;
+        if (rarity === 'tier' || rarity === 'level') {
+            openBulkSaleModal(rarity);
+            return;
+        }
         sellRarityElement.className = rarity === 'none' ? '' : rarity;
         if (rarity === 'none') { return; }
 
@@ -602,7 +654,8 @@ const generateLvlStats = (rerolls, percentages) => {
             try {
                 let marginalValue = 0.0;
                 if (selectedStats[i] == "hp") {
-                    let statFinal = Math.round(player.baseStats.hp + player.baseStats.hp * (player.bonusStats.hp + percentages["hp"]) / 100 + player.equippedStats.hp);
+                    const companionBonuses = getCurrentCompanionBonuses();
+                    let statFinal = Math.round(player.baseStats.hp + player.baseStats.hp * (player.bonusStats.hp + (companionBonuses.hp || 0) + percentages["hp"]) / 100 + player.equippedStats.hp);
                     let statInitial = player.stats.hpMax;
                     marginalValue = (statFinal - statInitial) / statInitial;
                 } else if (selectedStats[i] == "atk") {
@@ -611,7 +664,8 @@ const generateLvlStats = (rerolls, percentages) => {
                     let statInitial = player.stats.atk;
                     marginalValue = (statFinal - statInitial) / statInitial;
                 } else if (selectedStats[i] == "def") {
-                    let statFinal = Math.round(((player.baseStats.def + player.baseStats.def * ((player.bonusStats.def + percentages["def"]) / 100)) + player.equippedStats.def) * (1 + (dungeon.floorBuffs.def / 100)));
+                    const companionBonuses = getCurrentCompanionBonuses();
+                    let statFinal = Math.round(((player.baseStats.def + player.baseStats.def * ((player.bonusStats.def + (companionBonuses.def || 0) + percentages["def"]) / 100)) + player.equippedStats.def) * (1 + (dungeon.floorBuffs.def / 100)));
                     let statInitial = player.stats.def;
                     marginalValue = (statFinal - statInitial) / statInitial;
                 } else if (selectedStats[i] == "atkSpd") {

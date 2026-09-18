@@ -95,6 +95,9 @@
   "nothing-equipped": "Nothing equipped.",
   "sell": "Sell",
   "sell-item": "Sell {item}?",
+  "sell-by-tier": "Below tier…",
+  "sell-by-level": "Below level…",
+  "bulk-sell-preview": "Sell {count} items for {gold} gold?",
   "sell-all": "Sell All",
   "sell-all-question": "Sell all of your equipment?",
   "sell-all-rarity-question": "Sell all {rarity} equipment?",
@@ -608,7 +611,7 @@
     "volatile": "Volatile"
   },
   "affix-descriptions": {
-    "enraged": "Hits far harder, but has less health.",
+    "enraged": "Hits harder, but has less health.",
     "armored": "Much tougher to wound, but attacks slower.",
     "swift": "Attacks much faster, but has less health.",
     "vampiric": "Heals itself with every hit it lands.",

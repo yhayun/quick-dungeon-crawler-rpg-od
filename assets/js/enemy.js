@@ -239,6 +239,8 @@ const generateRandomEnemy = (condition) => {
 };
 
 // Set a randomly generated stat for the enemy
+const ENEMY_CRIT_DAMAGE_CAP = 800;
+
 const setEnemyStats = (type, condition) => {
     if (type == 'Offensive') {
         enemy.stats = {
@@ -249,7 +251,7 @@ const setEnemyStats = (type, condition) => {
             atkSpd: randomizeDecimal(0.2, 0.4),
             vamp: 0,
             critRate: randomizeDecimal(1, 4),
-            critDmg: randomizeDecimal(6.5, 7.5),
+            critDmg: 50,
             dodge: 0
         };
     } else if (type == 'Defensive') {
@@ -260,8 +262,8 @@ const setEnemyStats = (type, condition) => {
             def: randomizeNum(50, 80),
             atkSpd: randomizeDecimal(0.1, 0.3),
             vamp: 0,
-            critRate: 0,
-            critDmg: 0,
+            critRate: randomizeDecimal(0.1, 0.5),
+            critDmg: 50,
             dodge: 0
         };
     } else if (type == 'Balanced') {
@@ -273,7 +275,7 @@ const setEnemyStats = (type, condition) => {
             atkSpd: randomizeDecimal(0.15, 0.35),
             vamp: 0,
             critRate: randomizeDecimal(0.5, 1.5),
-            critDmg: randomizeDecimal(1, 3),
+            critDmg: 50,
             dodge: 0
         };
     } else if (type == 'Quick') {
@@ -285,7 +287,7 @@ const setEnemyStats = (type, condition) => {
             atkSpd: randomizeDecimal(0.35, 0.45),
             vamp: 0,
             critRate: randomizeDecimal(1, 4),
-            critDmg: randomizeDecimal(3, 6),
+            critDmg: 50,
             dodge: 0
         };
     } else if (type == 'Lethal') {
@@ -297,7 +299,7 @@ const setEnemyStats = (type, condition) => {
             atkSpd: randomizeDecimal(0.15, 0.35),
             vamp: 0,
             critRate: randomizeDecimal(4, 8),
-            critDmg: randomizeDecimal(6, 9),
+            critDmg: 50,
             dodge: 0
         };
     }
@@ -324,8 +326,8 @@ const setEnemyStats = (type, condition) => {
         } else if (["critRate"].includes(stat)) {
             enemy.stats[stat] += enemy.stats[stat] * (((dungeon.settings.enemyScaling - 1) / 4) * enemy.lvl);
         } else if (["critDmg"].includes(stat)) {
-            enemy.stats[stat] = 50;
-            enemy.stats[stat] += enemy.stats[stat] * (((dungeon.settings.enemyScaling - 1) / 8) * enemy.lvl);
+            const critDamageScaling = (dungeon.settings.enemyScaling - 1) * 0.5;
+            enemy.stats[stat] += enemy.stats[stat] * ((critDamageScaling / 8) * enemy.lvl);
         }
     }
 
@@ -335,7 +337,6 @@ const setEnemyStats = (type, condition) => {
         enemy.stats.atk = enemy.stats.atk * 1.3;
         enemy.stats.def = enemy.stats.def * 1.3;
         enemy.stats.critRate = enemy.stats.critRate * 1.1;
-        enemy.stats.critDmg = enemy.stats.critDmg * 1.1;
     }
 
     // Stat multiplier for monarchs
@@ -344,7 +345,6 @@ const setEnemyStats = (type, condition) => {
         enemy.stats.atk = enemy.stats.atk * 1.8;
         enemy.stats.def = enemy.stats.def * 2;
         enemy.stats.critRate = enemy.stats.critRate * 1.1;
-        enemy.stats.critDmg = enemy.stats.critDmg * 1.1;
     }
 
     // Apply stat multipliers for every stat
@@ -381,6 +381,7 @@ const setEnemyStats = (type, condition) => {
     if (typeof applyAffixStats === 'function') {
         applyAffixStats(enemy.stats, enemy.affixes);
     }
+    enemy.stats.critDmg = Math.min(ENEMY_CRIT_DAMAGE_CAP, enemy.stats.critDmg);
 
     const expYield = [];
     for (const stat in enemy.stats) {
@@ -441,6 +442,9 @@ const setEnemyStats = (type, condition) => {
 const ensureEnemyAffixState = () => {
     if (!enemy || typeof enemy !== 'object') {
         return [];
+    }
+    if (enemy.stats && Number.isFinite(enemy.stats.critDmg)) {
+        enemy.stats.critDmg = Math.min(ENEMY_CRIT_DAMAGE_CAP, enemy.stats.critDmg);
     }
     enemy.affixes = typeof normalizeAffixList === 'function'
         ? normalizeAffixList(enemy.affixes)
