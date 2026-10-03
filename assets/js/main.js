@@ -701,7 +701,7 @@ function openMenu(isTitle = false, silentInventoryClose = false) {
         sfxOpen.play();
 
         let master = volume.master * 100;
-        let bgm = (volume.bgm * 100) * 2;
+        let bgm = Math.round((volume.bgm * 100) * 2);
         let sfx = volume.sfx * 100;
         let fontScale = Math.round(fontSize.scale * 100);
         const fontOptions = Array.isArray(window.fontFamilyOptions) ? window.fontFamilyOptions : [];
@@ -945,7 +945,7 @@ function openMenu(isTitle = false, silentInventoryClose = false) {
                     <option value="8" ${autoIgnoreDoors === 8 ? 'selected' : ''}>8</option>
                     <option value="9" ${autoIgnoreDoors === 9 ? 'selected' : ''}>9</option>
                 </select></label>
-                <br><button id="apply-auto" data-i18n="apply">Apply</button>
+                <button id="apply-auto" data-i18n="apply">Apply</button>
             </div>`;
         applyTranslations(defaultModalElement);
         let autoToggle = document.querySelector('#auto-mode-toggle');
